@@ -39,6 +39,7 @@ ncombos = 1
 filename = f"data/{modname}_{names.get(ncombos, 'x' + str(ncombos))}_{('unshrunk', 'shrunk')[to_shrink]}"
 
 
+# generate a module with a given mutagen instance
 def generate_module(mg):
     with open(path.join(path.dirname(__file__), modname + ".py")) as f:
         code = f.read()
@@ -68,7 +69,6 @@ def run_test(
     examples=10000,
     additional_settings={},
 ):
-    # print("starting test")
     fails = []
     attempts = 0
 
@@ -83,13 +83,13 @@ def run_test(
         **additional_settings,
     )
     def f(x):
+        # keep track of attempts before first fail
         nonlocal attempts
         if len(fails) == 0:
             attempts += 1
         try:
             module.testing_function(deepcopy(x))
         except BaseException as e:
-            # tqdm.write(f"hmm {module.mg.current_mutants} {x}")
             fails.append(deepcopy(x))
             raise
 
@@ -99,7 +99,6 @@ def run_test(
         raise
     except BaseException as e:
         pass
-    # print("ending test")
     return (fails, attempts)
 
 
@@ -120,12 +119,10 @@ def triage_failure(module, mutants, data):
 
 
 def run_jobs(jobs, data_queue, test_settings={}, pbar=None, thread_name="?"):
-    # print("thread started")
     data = {}
     testing_module = generate_module(Mutagen())
     pepega = 0
     for job in jobs:
-        # tqdm.write("starting job " + str(pepega))
         pepega += 1
         k = "|".join(job)
         if pbar is not None:
@@ -150,14 +147,13 @@ def run_jobs(jobs, data_queue, test_settings={}, pbar=None, thread_name="?"):
         if pbar is not None:
             pbar.update()
     data_queue.put(data)
-    # current_process().kill()
-    # print("done terminating")
 
 
 def run_combos(combos, nthreads=3, test_settings={}, pbar_offset=0):
     data_queue = Queue()
     jobs = [[] for _ in range(nthreads)]
     muts = default_mg.all_mutants
+    # pre-distribute runs for the seed across the threads so they only communicate when finishing all their runs
     for (i, combo) in enumerate(itertools.combinations(muts, combos)):
         jobs[i % nthreads].append(set(combo))
     pbars = [
@@ -183,9 +179,6 @@ def run_combos(combos, nthreads=3, test_settings={}, pbar_offset=0):
     for pbar in pbars:
         pbar.close()
     return data
-
-# def compute_probability(data):
-
 
 
 if __name__ == "__main__":
@@ -214,7 +207,6 @@ if __name__ == "__main__":
         )
         total_data[seed_to_use] = res
         db.put(str(seed_to_use).encode("utf8"), json.dumps(res, sort_keys=True).encode("utf8"))
-        # print(seed_to_use, total_data[seed_to_use])
     db.close()
     with open(filename + ".json", "w") as f:
         json.dump(total_data, f, sort_keys=True)
