@@ -32,9 +32,9 @@ without_shrink = (Phase.explicit, Phase.reuse, Phase.generate, Phase.target)
 
 names = {1: "single", 2: "double", 3: "triple", 4: "quadruple"}
 
-modname = "toml"
+modname = "btree"
 to_shrink = False
-ncombos = 1
+ncombos = 3
 
 filename = f"data/{modname}_{names.get(ncombos, 'x' + str(ncombos))}_{('unshrunk', 'shrunk')[to_shrink]}"
 
@@ -184,7 +184,7 @@ def run_combos(combos, nthreads=3, test_settings={}, pbar_offset=0):
 if __name__ == "__main__":
     total_data = {}
     nseeds = 100
-    total_pbar = tqdm(range(1, nseeds + 1), position=0)
+    total_pbar = tqdm(range(5, nseeds + 1), position=0)
     total_pbar.set_description("overall")
     db = plyvel.DB(f"{filename}_ldb", create_if_missing=True)
     override = (input("Override existing results? [y/N] ").strip().lower() or "n")[0] == "y"
