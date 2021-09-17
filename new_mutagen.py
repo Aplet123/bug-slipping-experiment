@@ -99,6 +99,23 @@ class Mutagen:
 
         return decorator
 
+    def register_mutant(self, mutant_name, file=None, description=""):
+        """
+        Registers a mutant.
+        """
+        files = self.check_linked_files(file, APPLY_TO_ALL)
+
+        for basename in files:
+            if basename not in self.mutant_registry:
+                self.mutant_registry[basename] = {}
+
+            if mutant_name not in self.mutant_registry[basename]:
+                self.mutant_registry[basename][mutant_name] = Mutant(
+                    mutant_name, description
+                )
+        
+        self.all_mutants.add(mutant_name)
+
     def has_mutant(self, mutant_name, file=None, description=""):
         """
         Decorator that registers the function to which it is applied as an inline mutant
@@ -110,19 +127,7 @@ class Mutagen:
         """
 
         def decorator(f):
-            files = self.check_linked_files(file, APPLY_TO_ALL)
-
-            for basename in files:
-                if basename not in self.mutant_registry:
-                    self.mutant_registry[basename] = {}
-
-                if mutant_name not in self.mutant_registry[basename]:
-                    self.mutant_registry[basename][mutant_name] = Mutant(
-                        mutant_name, description
-                    )
-            
-            self.all_mutants.add(mutant_name)
-
+            self.register_mutant(mutant_name, file, description)
             return f
 
         return decorator
